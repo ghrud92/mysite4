@@ -27,24 +27,22 @@ public class BoardService {
 	private BoardRepository boardRepository;
 	
 	public Map<String, Object> getMap(String kwd, int page){
-		// 모든것을 담을 map
-		Map<String, Object> map = new HashMap<String, Object>();
 		
+		// 게시판의 리스트
+		Map<String, Object> map = boardRepository.getList(kwd, page, CountPage);
+
 		// 기본 검색 & 페이지 정보
 		map.put("kwd", kwd);
 		map.put("page", page);
 		map.put("CountPage",CountPage);
 		map.put("CountList", CountList);
 		
-		// 게시판의 리스트
-		List<BoardVo> list = boardDao.getList(kwd, page, CountPage);
-		map.put("list", list);
-		
 		// 페이징 처리
 		int left = 1;
 		int right = 0;
 		int startPage, lastPage;
-		int count = boardDao.getCount('%' + kwd + '%');
+		String tempCount = map.get("totalCount").toString();
+		int count = Integer.parseInt(tempCount);
 		int maxPage = count/CountPage;
 		if(count % CountPage != 0)
 			maxPage++;
@@ -84,19 +82,19 @@ public class BoardService {
 	}
 	
 	public void increaseHit(Long no){
-		boardDao.increaseHit(no);
+		boardRepository.increaseHit(no);
 	}
 	
-	public BoardVo getView(Long no){
-		BoardVo vo = boardDao.getContent(no);
-		return vo;
+	public Board getView(Long no){
+		Board board = boardRepository.getContent(no);
+		return board;
 	}
 	
-	public void modify(BoardVo vo){
-		boardDao.update(vo);
+	public void modify(Board board){
+		boardRepository.update(board);
 	}
 	
 	public void delete(Long no){
-		boardDao.delete(no);
+		boardRepository.delete(no);
 	}
 }

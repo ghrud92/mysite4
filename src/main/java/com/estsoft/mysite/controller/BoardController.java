@@ -69,22 +69,22 @@ public class BoardController {
 		boardService.increaseHit(no);
 		
 		// 내용 가져오기
-		BoardVo vo = boardService.getView(no);
-		model.addAttribute("content", vo);
+		Board board = boardService.getView(no);
+		model.addAttribute("content", board);
 		
 		return "/board/view";
 	}
 	
 	@RequestMapping("/modifyform")
 	public String modifyform(Model model, @RequestParam("no") Long no){
-		BoardVo vo = boardService.getView(no);
-		model.addAttribute("content",vo);
+		Board board = boardService.getView(no);
+		model.addAttribute("content",board);
 		return "/board/modify";
 	}
 	
 	@RequestMapping("/modify")
-	public String modify(@ModelAttribute BoardVo vo){
-		boardService.modify(vo);
+	public String modify(@ModelAttribute Board board){
+		boardService.modify(board);
 		return "redirect:/board";
 	}
 	

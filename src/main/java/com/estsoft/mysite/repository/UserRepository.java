@@ -1,14 +1,15 @@
 package com.estsoft.mysite.repository;
 
-import java.util.List;
+import static com.estsoft.mysite.domain.QUser.user;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.persistence.TypedQuery;
 
 import org.springframework.stereotype.Repository;
 
 import com.estsoft.mysite.domain.User;
+import com.mysema.query.jpa.impl.JPAQuery;
+import com.mysema.query.jpa.impl.JPAUpdateClause;
 
 @Repository
 public class UserRepository {
@@ -21,18 +22,15 @@ public class UserRepository {
 	}
 	
 	// Login
-	public User get(User user){
-		String psql = "select u from User u where u.email = :email and u.passwd = :passwd";
-		TypedQuery<User> query = em.createQuery(psql, User.class);
-		query.setParameter("email", user.getEmail());
-		query.setParameter("passwd", user.getPasswd());
+	public User get(User target){
+		JPAQuery query = new JPAQuery(em);
 		
-		List<User> list = query.getResultList();
-		if(list.isEmpty()){
-			return null;
-		}
+		User authUser =
+			query.from(user)
+			.where(user.email.eq(target.getEmail()), user.passwd.eq(target.getPasswd()))
+			.singleResult(user);
 		
-		return list.get(0);
+		return authUser;
 	}
 
 	//gender 포함
@@ -42,25 +40,29 @@ public class UserRepository {
 	}
 	
 	// 정보 수정
-	public void update(User user){
-		User target = em.find(User.class, user.getNo());
-		target.setName(user.getName());
-		target.setEmail(user.getEmail());
-		target.setGender(user.getGender());
-		if(user.getPasswd() != null){
-			target.setPasswd(user.getPasswd());
+	public void update(User target){
+		JPAUpdateClause clause = new JPAUpdateClause(em, user);
+		
+		clause.where(user.no.eq(target.getNo()))
+		.set(user.name, target.getName())
+		.set(user.email, target.getEmail())
+		.set(user.gender, target.getGender());
+		
+		if(target.getPasswd() != ""){
+			clause.set(user.passwd, target.getPasswd());
 		}
+		
+		clause.execute();
 	}
 
 	public User get(String email){
-		String psql = "select u from User u where u.email = :email";
-		TypedQuery<User> query = em.createQuery(psql, User.class);
-		query.setParameter("email", email);
+		JPAQuery query = new JPAQuery(em);
 		
-		List<User> list = query.getResultList();
-		if(list.isEmpty()){
-			return null;
-		}
-		return list.get(0);
+		User result =
+			query.from(user)
+			.where(user.email.eq(email))
+			.singleResult(user);
+		
+		return result;
 	}
 }

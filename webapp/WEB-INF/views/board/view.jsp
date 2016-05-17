@@ -38,7 +38,7 @@
 				</table>
 				<div class="bottom">
 					<a href="${pageContext.request.contextPath }/board?page=${param.page }&kwd=${param.kwd}">글목록</a>
-					<c:if test="${content.userNo == sessionScope.authUser.no }">
+					<c:if test="${content.user.no == sessionScope.authUser.no }">
 						<a href="${pageContext.request.contextPath }/board/modifyform?no=${content.no}">글수정</a>
 					</c:if>
 					<c:if test="${not empty sessionScope.authUser }">

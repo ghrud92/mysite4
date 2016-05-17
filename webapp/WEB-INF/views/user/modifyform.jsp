@@ -26,7 +26,7 @@
 					<input type="button" value="id 중복체크">
 					
 					<label class="block-label">패스워드</label>
-					<input name="password" type="password" value="">
+					<input name="passwd" type="password" value="">
 					
 					<fieldset>
 						<c:choose>

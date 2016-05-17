@@ -1,15 +1,18 @@
 package com.estsoft.mysite.repository;
 
+import static com.estsoft.mysite.domain.QGuestbook.guestbook;
+
 import java.util.Date;
 import java.util.List;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.persistence.TypedQuery;
 
 import org.springframework.stereotype.Repository;
 
 import com.estsoft.mysite.domain.Guestbook;
+import com.mysema.query.jpa.impl.JPADeleteClause;
+import com.mysema.query.jpa.impl.JPAQuery;
 
 @Repository
 public class GuestbookRepository {
@@ -28,28 +31,27 @@ public class GuestbookRepository {
 	}
 	
 	public List<Guestbook> getList(){
-		String psql = "select g from Guestbook g order by g.no desc";
-		TypedQuery<Guestbook> query = em.createQuery(psql, Guestbook.class);
-		List<Guestbook> list = query.getResultList();
+		JPAQuery query = new JPAQuery(em);
+		
+		List<Guestbook> list = query.from(guestbook).orderBy(guestbook.no.desc()).list(guestbook);
 		return list;
 	}
 	
 	public List<Guestbook> getList(int page){
-		String psql = "select g from Guestbook g order by g.no desc";
-		TypedQuery<Guestbook> query = em.createQuery(psql, Guestbook.class);
-		query.setFirstResult((page-1)*5);
-		query.setMaxResults(5);
-		List<Guestbook> list = query.getResultList();
+		JPAQuery query = new JPAQuery(em);
+		
+		List<Guestbook> list = 
+			query.from(guestbook)
+			.orderBy(guestbook.no.desc())
+			.offset((page-1)*5)
+			.limit(5)
+			.list(guestbook);
 		return list;
 	}
 	
-	public void delete(Guestbook guestbook){
-		String psql = "select g from Guestbook g where no = :no and passwd = :passwd";
-		TypedQuery<Guestbook> query = em.createQuery(psql, Guestbook.class);
-		query.setParameter("no", guestbook.getNo());
-		query.setParameter("passwd", guestbook.getPasswd());
+	public void delete(Guestbook target){
+		JPADeleteClause clause = new JPADeleteClause(em, guestbook);
 		
-		Guestbook target = query.getSingleResult();
-		em.remove(target);
+		clause.where(guestbook.no.eq(target.getNo()), guestbook.passwd.eq(target.getPasswd())).execute();
 	}
 }

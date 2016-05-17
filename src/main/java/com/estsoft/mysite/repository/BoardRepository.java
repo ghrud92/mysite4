@@ -1,5 +1,8 @@
 package com.estsoft.mysite.repository;
 
+import static com.estsoft.mysite.domain.QBoard.board;
+
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,7 +16,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import com.estsoft.mysite.domain.Board;
-import com.estsoft.mysite.vo.BoardVo;
+import com.mysema.query.SearchResults;
+import com.mysema.query.jpa.impl.JPADeleteClause;
+import com.mysema.query.jpa.impl.JPAQuery;
+import com.mysema.query.jpa.impl.JPAUpdateClause;
 
 @Repository
 public class BoardRepository {
@@ -24,46 +30,85 @@ public class BoardRepository {
 	@PersistenceContext
 	private EntityManager em;
 	
-	public List<BoardVo> getList(String kwd, int page, int CountPage){
-		Map<String, Object> map = new HashMap<String, Object>();
-		map.put("kwd", '%' + kwd + '%');
-		map.put("limit", (page-1)*CountPage);
-		map.put("CountPage", CountPage);
+	public Map<String, Object> getList(String kwd, int page, int CountPage){
+		JPAQuery query = new JPAQuery(em);
 		
-		List<BoardVo> list = sqlSession.selectList("board.getList", map);
-		return list;
+		SearchResults<Board> results =
+			query.from(board)
+			.where(board.title.like("%"+kwd+"%"))
+			.orderBy(board.groupNo.desc())
+			.orderBy(board.orderNo.asc())
+			.offset((page-1)*CountPage)
+			.limit(CountPage)
+			.listResults(board);
+		
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put("list", results.getResults());
+		map.put("totalCount", results.getTotal());
+		
+		return map;
 	}
 	
-	public void insert(Board board){
-		em.persist(board);
+	public void insert(Board target){
+		JPAQuery query = new JPAQuery(em);
+		
+		target.setRegDate(new Date());
+		
+		
+		if(target.getGroupNo() == 0){
+			List<Board> list = 
+				query.from(board)
+				.orderBy(board.groupNo.desc())
+				.offset(0)
+				.limit(1)
+				.list(board);
+			if(list.isEmpty()){
+				target.setGroupNo(1);
+			}else{
+				target.setGroupNo(list.get(0).getGroupNo() + 1);
+			}
+		}
+		em.persist(target);
 	}
 	
 	public void increaseOrder(Board board){
-		String jpql = "update Board b set b.order_no = b.order_no + 1"
-				+ " where b.group_no = :group_no and b.order_no >= :order_no";
+		String jpql = "update Board b set b.orderNo = b.orderNo + 1"
+				+ " where b.groupNo = :groupNo and b.orderNo >= :orderNo";
 		Query query = em.createQuery(jpql);
 		
-		query.setParameter("group_no", board.getGroupNo());
-		query.setParameter("order_no", board.getOrderNo());
+		query.setParameter("groupNo", board.getGroupNo());
+		query.setParameter("orderNo", board.getOrderNo());
 		
 		query.executeUpdate();
 	}
 	
-	public BoardVo getContent(Long no){
-		BoardVo vo = sqlSession.selectOne("board.get", no);
-		return vo;
+	public Board getContent(Long no){
+		Board result = em.find(Board.class, no);
+		return result;
 	}
 	
-	public void update(BoardVo vo){
-		sqlSession.update("board.update", vo);
+	public void update(Board target){
+		JPAUpdateClause clause = new JPAUpdateClause(em, board);
+		
+		clause.where(board.no.eq(target.getNo()))
+		.set(board.title, target.getTitle())
+		.set(board.content, target.getContent())
+		.execute();
 	}
 	
 	public void delete(Long no){
-		sqlSession.delete("board.delete", no);
+		JPADeleteClause clause = new JPADeleteClause(em, board);
+		
+		clause.where(board.no.eq(no))
+		.execute();
 	}
 	
 	public void increaseHit(Long no){
-		sqlSession.update("board.increaseHit", no);
+		JPAUpdateClause clause = new JPAUpdateClause(em, board);
+		
+		clause.where(board.no.eq(no))
+		.set(board.hit, board.hit.add(1))
+		.execute();
 	}
 	
 	public int getCount(String kwd){

@@ -38,11 +38,11 @@
 								</c:if>
 								<a href="${pageContext.request.contextPath }/board/view?no=${vo.no}&page=${pageMap.page}&kwd=${pageMap.kwd}">${vo.title }</a>
 							</td>
-							<td>${vo.userName }</td>
+							<td>${vo.user.name }</td>
 							<td>${vo.hit }</td>
-							<td>${vo.reg_date }</td>
+							<td>${vo.regDate }</td>
 							<c:choose>
-								<c:when test="${vo.userNo == sessionScope.authUser.no }">
+								<c:when test="${vo.user.no == sessionScope.authUser.no }">
 									<td>
 										<a href="${pageContext.request.contextPath }/board/delete?no=${vo.no}" class="del">삭제</a>
 									</td>
